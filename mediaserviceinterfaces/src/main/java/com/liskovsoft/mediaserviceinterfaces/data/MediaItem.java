@@ -51,6 +51,11 @@ public interface MediaItem {
     long getDurationMs();
     String getBadgeText();
     String getProductionDate();
+
+    /** Localized publication label from a dedicated field or renderer metadata part. */
+    default String getUploadDateText() {
+        return getType() == TYPE_MUSIC ? null : getProductionDate();
+    }
     long getPublishedDate();
     String getCardImageUrl();
     String getBackgroundImageUrl();

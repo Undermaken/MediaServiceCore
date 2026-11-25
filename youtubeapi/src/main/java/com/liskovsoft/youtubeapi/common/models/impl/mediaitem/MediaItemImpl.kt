@@ -24,6 +24,8 @@ internal class WrapperMediaItem(private val itemWrapper: ItemWrapper): BaseMedia
     override val subTitle by lazy { itemWrapper.getSubTitle() } // quality tag (e.g. 4K, LIVE) or full second title
     override val userName by lazy { itemWrapper.getUserName() }
     override val publishedTime by lazy { itemWrapper.getPublishedTime() }
+    private val rendererUploadDateText by lazy { itemWrapper.getRendererUploadDateText() }
+    override fun getUploadDateText(): String? = rendererUploadDateText ?: super.getUploadDateText()
     override val viewCountText by lazy { itemWrapper.getViewCountText() }
     override val upcomingEventText by lazy { itemWrapper.getUpcomingEventText() }
     override val cardThumbImageUrl by lazy { itemWrapper.getThumbnails()?.getOptimalResThumbnailUrl() }

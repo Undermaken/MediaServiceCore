@@ -546,7 +546,8 @@ internal data class LockupItem(
                         val metadataParts: List<MetadataPart?>?
                     ) {
                         data class MetadataPart(
-                            val text: TextItem?
+                            val text: TextItem?,
+                            val accessibilityLabel: String?
                         )
                     }
                 }

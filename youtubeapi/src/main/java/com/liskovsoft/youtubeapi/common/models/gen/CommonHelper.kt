@@ -197,6 +197,17 @@ internal fun TileItem.getPercentWatched() = header?.tileHeaderRenderer?.thumbnai
 internal fun TileItem.getStartTimeSeconds() = onSelectCommand?.getStartTimeSeconds()
 internal fun TileItem.getUserName() = null
 internal fun TileItem.getPublishedTime() = null
+
+// A TV video tile carries views, the divider and the date as three separate text items.
+private fun TileItem.getUploadDateText(): String? {
+    if (contentType != TILE_CONTENT_TYPE_VIDEO || isLive() || isUpcoming()) return null
+    return metadata?.tileMetadataRenderer?.lines?.firstNotNullOfOrNull { line ->
+        val fields = line?.lineRenderer?.items?.mapNotNull { it?.lineItemRenderer?.text }
+            ?: return@firstNotNullOfOrNull null
+        val (views, divider, date) = fields.takeIf { it.size == 3 } ?: return@firstNotNullOfOrNull null
+        date.getText()?.takeIf { views.getAccessibilityLabel() != null && divider.getText() == "•" }
+    }
+}
 internal fun TileItem.getViewCountText() =
     YouTubeHelper.createInfo(*metadata?.tileMetadataRenderer?.lines?.map {
         ServiceHelper.combineItems(" ", *it?.lineRenderer?.items?.map { it?.lineItemRenderer?.text }?.toTypedArray() ?: emptyArray())
@@ -256,6 +267,19 @@ internal fun LockupItem.getSubTitle() = YouTubeHelper.createInfo(
     *metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.mapNotNull {
         it?.metadataParts?.mapNotNull { it?.text?.getText() } }?.flatten()?.toTypedArray() ?: emptyArray<String>()
 )
+// Search video and music lockups put a labeled date after the views count in a separate row.
+private fun LockupItem.getUploadDateText(): String? {
+    if ((contentType != "LOCKUP_CONTENT_TYPE_VIDEO" && contentType != "LOCKUP_CONTENT_TYPE_MUSIC") || isLive()) {
+        return null
+    }
+    val rows = metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows ?: return null
+    if (rows.size != 2 || rows.first()?.metadataParts?.size != 1) return null
+    val fields = rows.last()?.metadataParts?.takeIf { it.size == 2 } ?: return null
+    if (fields.first()?.text?.getText().isNullOrBlank() || fields.first()?.accessibilityLabel != null) return null
+    val date = fields.last()?.text?.getText()
+    return date?.takeIf { it.isNotBlank() && it == fields.last()?.accessibilityLabel }
+}
+
 internal fun LockupItem.getVideoId() = rendererContext?.getVideoId()
 internal fun LockupItem.getPlaylistId() = rendererContext?.getPlaylistId()
 internal fun LockupItem.getThumbnails() = getThumbnailView()?.image
@@ -327,6 +351,8 @@ internal fun ItemWrapper.getStartTimeSeconds() = getVideoItem()?.getStartTimeSec
 internal fun ItemWrapper.getUserName() = getVideoItem()?.getUserName() ?: getMusicItem()?.getUserName() ?: getTileItem()?.getUserName()
     ?: getRadioItem()?.getUserName()
 internal fun ItemWrapper.getPublishedTime() = getVideoItem()?.getPublishedTimeText() ?: getMusicItem()?.getViewsAndPublished() ?: getTileItem()?.getPublishedTime()
+internal fun ItemWrapper.getRendererUploadDateText() =
+    getTileItem()?.getUploadDateText() ?: getLockupItem()?.getUploadDateText()
 internal fun ItemWrapper.getViewCountText() = getVideoItem()?.getViewCount() ?: getMusicItem()?.getViewsCountText() ?: getTileItem()?.getViewCountText()
 internal fun ItemWrapper.getUpcomingEventText() = getVideoItem()?.getUpcomingEventText() ?: getMusicItem()?.getUpcomingEventText()
     ?: getTileItem()?.getUpcomingEventText()
